@@ -11,7 +11,9 @@
 ;| Version    : ...
 ;| Autor      : ...
 ;+-----------------------------------------------------------------------------
-.include        "AVR.H"
+    .include        "AVR.H"
+    .equ            BAUD, 9600
+    .equ            F_CPU, 3686400
 ;------------------------------------------------------------------------------
 begin:
     rjmp    main                        ; RESET External Pin, Power-on Reset, Brown-out Reset and Watchdog Reset
@@ -36,3 +38,21 @@ begin:
 ;------------------------------------------------------------------------------
 ; Start, Power On, Reset
 main:
+    ldi     r16, lo8(RAMEND)
+    out     SPL, r16
+    ldi     r16, hi8(RAMEND)
+    out     SPH, r16
+    cpi     DDRD, 2
+    sbi     PORTD, 2
+    rcall   init_UART
+    rcall   init_twiInitMaster
+    rcall   init_RTC
+mainloop:
+    rcall   sendTime
+    rcall   wait_1s
+    rjmp    mainloop
+
+    .include "utilities.s"
+    .include "rtc_control.s"
+    .include "uart_control.s"
+    .include "twi_control.s"
