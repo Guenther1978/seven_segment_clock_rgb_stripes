@@ -1,74 +1,51 @@
-    ;;
-    ; @file
-    ;;
+	;;
+	; @file
+	;;
 
-    .equ    REG_TEMP, 0b00000000
-    .equ    REG_CONFIG, 0b00000001
-    .equ    REG_HYST, 0b00000010
-    .equ    REG_SET, 0b00000011
+	.equ    REG_TEMP, 0b00000000
+	.equ    REG_CONFIG, 0b00000001
+	.equ    REG_HYST, 0b00000010
+	.equ    REG_SET, 0b00000011
 
-    push    r16
-    ;; Clock
-    ldi     r16, ((F_CPU/TWI_CLOCK) - 16)/2
-    out     TWBR, r16
-    ;; TWI status register, predevider
-    ldi     r16, 0
-    out     TWSR, r16
-    ;; Bus Address
-    ldi     r16, TWI_ADR
-    out     TWAR, r16
-    ;; Enable
-    ldi     r16, _TWINT | TWEN
-    out     TWCR, r16
-    pop     r16
-    ret
+	;;
+	; @fn init_LM75
+	;;
+init_LM75:
+	ldi	r16, 0
+	ldi	r17, 0
+	ldi	r18, REG_CONFIG
+	rcall   setRegisterLM75
+	; hysteresis = switch off
+	ldi	r16, 0
+	ldi	r17, 19
+	ldi	r18, REG_HYST
+	rcall	setRegisterLM75
+	; set = temperature switch on
+	ldi	r16, 0
+	ldi	r17, 21
+	ldi	r18, REG_SET
+	rcall	setRegisterLM75
 
-twiStart:
-    push    r16
-    ldi     r16, _TWINT | _TWSTA | TWEN
-    out     TWCR, r16
-TWI_Start_wait1:
-    in      r16, TWCR
-    sbrs    r16, POS_TWINT
-    rjmp    TWI_Start_wait1
-    pop     r16
-    ret
-
-twiStop:
-    push    r16
-    in      r16, TWRC
-    andi    r16, _TWEN | _TWIE
-    ori     r16, _TWINT | _TWSTO
-    out     TWCR, r16
-    pop     r16
-    ret
-
-twiWriteByte:
-    push    r16
-    out     TWDR, r16
-    in      r16, TWCR
-    andi    r16, _TWEN | _TWIE
-    ori     r16, _TWINT
-    sbrc    r20, 0
-    ori     r16, _TWEA
-    out     TWCR, r16
-twiWriteByte_wait2:
-    in      r16, TWCR
-    sbrs    r16, POS_TWINT
-    rjmp    twiWriteByte_wait2
-    pop     r16
-    ret
-
-twiReadByte:
-    in      r16, TWCR
-    andi    r16, _TWEN | _TWIE
-    ori     r16, _TWINT
-    sbrc    r20, 0
-    ori     r16, _TWEA
-    out     TWCR, r16
-twiReadByte_wait2:
-    in      r16, TWCR
-    sbrs    r16, POS_TWINT
-    rjmp    twiReadByte_wait2
-    in      r16, TWDR
-    ret
+	;;
+	; @ get_temp
+	;;
+getTemp:
+	push	r20
+	; send address
+	rcall	twiStart
+	ldi	r16, LM75_ADR | TWI_WRITE
+	ldi	r20, 0
+	rcall	twiWriteByte
+	ldi	r16, REG_TEMP
+	ldi	r20, 0
+	rcall	twiWriteByte
+	; read slave
+	rcall	twiStart
+	ldi	r16, LM75_ADR | TWI_READ
+	ldi	r20, 0b00000001
+	rcall	TwiWriteByte
+	ldi	r20, 0b00000001
+	rcall	TwiReadByte
+	mov	r21, r16
+	pop	r20
+	ret
