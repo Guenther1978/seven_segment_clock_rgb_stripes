@@ -56,3 +56,21 @@ getRtcData:
 	rcall	twiStop			; TWI beenden
 	pop	r20
 	ret
+
+;; @fn sendTime
+sendTime:
+	push	r16
+	rcall	getHour
+	rcall	sendBCD
+	ldi	r16, ':'
+	rcall	putChar
+	rcall	getMinute
+	rcall	sendBCD
+	ldi	r16, ':'
+	rcall	putChar
+	rcall	getSeconds
+	rcall	sendBCD
+	ldi	r16, 10
+	rcall	putChar
+	pop	r16
+	ret

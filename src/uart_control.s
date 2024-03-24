@@ -24,3 +24,23 @@ putChar:
     rjmp    putChar
     out     UDR, r16
     ret
+
+    ;;
+    ; @fn sendBCD
+    : @brief BCDs
+    ;;
+sendBCD:
+	push	r16
+	lsr	r16
+	lsr	r16
+	lsr	r16
+	lsr	r16
+	ori	r16, 0x30
+	rcall	putChar
+	pop	r16
+	push	r16
+	andi	r16, 0x0f
+	ori	r16, 0x30
+	rcall	putChar
+	pop	r16
+	ret
