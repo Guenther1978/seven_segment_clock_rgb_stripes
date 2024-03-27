@@ -10,7 +10,7 @@ init_UART:
     push    r16
     sbi     UCSRB, 4
     sbi     UCSRB, 3
-    ldi     r16, F_CPU/(BAUC * 16) - 1
+    ldi     r16, F_CPU/(BAUD * 16) - 1
     out     UBRRL, r16
     pop     r16
     ret
@@ -43,4 +43,16 @@ sendBCD:
 	ori	r16, 0x30
 	rcall	putChar
 	pop	r16
+	ret
+
+	;;
+	; @fn getChar
+	;;
+getChar:
+	sbis	UCSRA, 7	; USR = UCSRA = 0x0B, RXC = Bit 7
+	rjump	noChar
+	in	r16, UDR
+	ret
+noChar:
+	ldi	r16, 0
 	ret
